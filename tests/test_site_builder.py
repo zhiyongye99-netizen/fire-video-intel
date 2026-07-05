@@ -26,6 +26,7 @@ class SiteBuilderTest(unittest.TestCase):
             html = output.read_text(encoding="utf-8")
             self.assertIn("消防资料自动收件箱", html)
             self.assertIn("本次新增：0 条", html)
+            self.assertIn("累计入库：0 条", html)
             self.assertIn("UL FSRI", html)
             self.assertIn("不调用付费 API", html)
             self.assertNotIn("|---|---|", html)
@@ -46,6 +47,7 @@ class SiteBuilderTest(unittest.TestCase):
 
             index = (site / "index.html").read_text(encoding="utf-8")
             self.assertIn("videos/web-demo/summary.html", index)
+            self.assertIn("累计入库：1 条", index)
             summary_html = (site / "videos" / "web-demo" / "summary.html").read_text(encoding="utf-8")
             self.assertIn("<pre><code>fire dynamics</code></pre>", summary_html)
             self.assertNotIn("```text", summary_html)

@@ -92,6 +92,7 @@ def build_site(knowledge_base: Path, site_dir: Path) -> Path:
     daily = _read(knowledge_base / "daily" / "latest.md", "# 消防专业资料自动收集日报\n\n- 本次新增：0 条\n")
     source_check = _read(knowledge_base / "source-check.md", "# 信息源体检报告\n\n- 尚未生成体检报告\n")
     video_links = _collect_video_links(knowledge_base, site_dir)
+    total_count = len(video_links)
     videos_html = "\n".join(
         f"<li><a href=\"{html.escape(href)}\">{html.escape(title)}</a></li>" for title, href in video_links
     ) or "<li>暂无入库视频摘要。低相关视频会被过滤，不进入资料库。</li>"
@@ -108,6 +109,7 @@ def build_site(knowledge_base: Path, site_dir: Path) -> Path:
     </section>
     <section>
       <h2>入库资料摘要</h2>
+      <p class="bullet">累计入库：{total_count} 条</p>
       <ul>{videos_html}</ul>
     </section>
     <section>

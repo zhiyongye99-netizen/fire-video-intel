@@ -1,0 +1,42 @@
+sources:
+  - name: UL FSRI YouTube
+    type: youtube_channel
+    url: "https://www.youtube.com/@ULFSRI"
+    priority: high
+    language: en
+    tags: ["火灾动力学", "内攻安全", "实验研究", "通风", "轰燃"]
+
+  - name: NIST Fire Research
+    type: web
+    url: "https://www.nist.gov/fire"
+    priority: high
+    language: en
+    tags: ["火灾实验", "建筑火灾", "烟气", "标准研究"]
+
+  - name: NIOSH Fire Fighter Fatality Investigation
+    type: web
+    url: "https://www.cdc.gov/niosh/fire/"
+    priority: high
+    language: en
+    tags: ["消防员伤亡", "事故调查", "安全警示", "LODD", "NIOSH"]
+
+  - name: U.S. Fire Administration
+    type: web
+    url: "https://www.usfa.fema.gov/"
+    priority: high
+    language: en
+    tags: ["消防管理", "培训", "统计", "National Fire Academy"]
+
+  - name: NFPA News
+    type: web
+    url: "https://www.nfpa.org/news-blogs-and-articles"
+    priority: high
+    language: en
+    tags: ["消防标准", "风险治理", "消防管理"]
+
+  - name: Fire Engineering
+    type: web
+    url: "https://www.fireengineering.com/"
+    priority: medium
+    language: en
+    tags: ["消防训练", "战术", "指挥", "装备"]

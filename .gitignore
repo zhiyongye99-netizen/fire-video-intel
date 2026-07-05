@@ -10,4 +10,5 @@ env/
 .ruff_cache/
 dist/
 build/
+_site/
 *.egg-info/

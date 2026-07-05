@@ -52,6 +52,14 @@ python3 -m fire_video_intel.main --mode daily --sources sources.yaml --output kn
 
 如果使用公开仓库，标准 GitHub-hosted runner 通常不计费。若使用私有仓库，需要注意 GitHub Free 的 Actions 免费分钟额度。
 
+工作流会同时更新 `knowledge_base/` 并部署 GitHub Pages。页面是静态 HTML，不需要服务器，不调用付费 API。
+
+本地构建页面：
+
+```bash
+python3 scripts/build_site.py --knowledge-base knowledge_base --site-dir _site
+```
+
 ## 目录结构
 
 ```text

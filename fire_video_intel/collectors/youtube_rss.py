@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from typing import Iterable, List
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
 from fire_video_intel.models import VideoItem
@@ -18,7 +18,8 @@ def youtube_rss_url(channel_id: str) -> str:
 
 
 def fetch_youtube_rss(channel_id: str, timeout: int = 20) -> str:
-    with urlopen(youtube_rss_url(channel_id), timeout=timeout) as response:
+    request = Request(youtube_rss_url(channel_id), headers={"User-Agent": "fire-video-intel/0.1"})
+    with urlopen(request, timeout=timeout) as response:
         return response.read().decode("utf-8")
 
 

@@ -30,6 +30,26 @@ class SiteBuilderTest(unittest.TestCase):
             self.assertIn("不调用付费 API", html)
             self.assertNotIn("|---|---|", html)
 
+    def test_builds_video_summary_pages(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            kb = root / "knowledge_base"
+            site = root / "_site"
+            summary = kb / "videos" / "web-demo" / "summary.zh.md"
+            summary.parent.mkdir(parents=True)
+            summary.write_text(
+                "# Fire Research\n\n## 1. 基本信息\n- 来源：NIST\n\n```text\nfire dynamics\n```\n",
+                encoding="utf-8",
+            )
+
+            build_site(kb, site)
+
+            index = (site / "index.html").read_text(encoding="utf-8")
+            self.assertIn("videos/web-demo/summary.html", index)
+            summary_html = (site / "videos" / "web-demo" / "summary.html").read_text(encoding="utf-8")
+            self.assertIn("<pre><code>fire dynamics</code></pre>", summary_html)
+            self.assertNotIn("```text", summary_html)
+
 
 if __name__ == "__main__":
     unittest.main()

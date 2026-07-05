@@ -27,18 +27,21 @@ def check_source(
     web_probe: Callable[[str, int], int] = default_web_probe,
     channel_resolver: Callable[[str, int], str] = resolve_channel_id,
 ) -> SourceCheck:
-    try:
-        if source.type == "youtube_channel":
-            channel_id = source.channel_id or channel_resolver(source.url, timeout)
-            if not channel_id:
-                return SourceCheck(source.name, source.type, source.url, False, "channel_id_not_found")
-            return SourceCheck(source.name, source.type, source.url, True, f"channel_id={channel_id}")
+    last_error = None
+    for _ in range(2):
+        try:
+            if source.type == "youtube_channel":
+                channel_id = source.channel_id or channel_resolver(source.url, timeout)
+                if not channel_id:
+                    return SourceCheck(source.name, source.type, source.url, False, "channel_id_not_found")
+                return SourceCheck(source.name, source.type, source.url, True, f"channel_id={channel_id}")
 
-        status = web_probe(source.url, timeout)
-        ok = 200 <= status < 400
-        return SourceCheck(source.name, source.type, source.url, ok, f"HTTP {status}")
-    except Exception as exc:
-        return SourceCheck(source.name, source.type, source.url, False, f"{exc.__class__.__name__}: {exc}")
+            status = web_probe(source.url, timeout)
+            ok = 200 <= status < 400
+            return SourceCheck(source.name, source.type, source.url, ok, f"HTTP {status}")
+        except Exception as exc:
+            last_error = exc
+    return SourceCheck(source.name, source.type, source.url, False, f"{last_error.__class__.__name__}: {last_error}")
 
 
 def render_source_checks(checks: list[SourceCheck]) -> str:

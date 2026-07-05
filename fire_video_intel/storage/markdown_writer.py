@@ -36,11 +36,11 @@ def write_video_summary(base_dir: Path, item: VideoItem, transcript: str = "") -
 - 相关性评分：{item.relevance_score}/10
 
 ## 2. 证据链
-- 视频 ID：{item.video_id}
+- 资料 ID：{item.video_id}
 - 字幕来源：{item.subtitle_source}
 - 处理时间：{processed_at}
 
-## 3. 原始字幕摘录
+## 3. 原始内容摘录
 
 ```text
 {transcript.strip() or "无可用字幕，已进入待处理队列。"}

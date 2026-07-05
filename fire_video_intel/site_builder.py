@@ -12,8 +12,25 @@ def _read(path: Path, fallback: str) -> str:
 def _markdown_to_html(markdown: str) -> str:
     lines = []
     in_table = False
+    in_code = False
+    code_lines = []
     for raw in markdown.splitlines():
         line = raw.strip()
+        if line.startswith("```"):
+            if in_code:
+                escaped = html.escape("\n".join(code_lines).strip())
+                lines.append(f"<pre><code>{escaped}</code></pre>")
+                code_lines = []
+                in_code = False
+            else:
+                if in_table:
+                    lines.append("</tbody></table>")
+                    in_table = False
+                in_code = True
+            continue
+        if in_code:
+            code_lines.append(raw)
+            continue
         if not line:
             if in_table:
                 lines.append("</tbody></table>")
@@ -50,16 +67,22 @@ def _markdown_to_html(markdown: str) -> str:
             lines.append(f"<p>{html.escape(line)}</p>")
     if in_table:
         lines.append("</tbody></table>")
+    if in_code:
+        escaped = html.escape("\n".join(code_lines).strip())
+        lines.append(f"<pre><code>{escaped}</code></pre>")
     return "\n".join(lines)
 
 
-def _collect_video_links(knowledge_base: Path) -> list[tuple[str, str]]:
+def _collect_video_links(knowledge_base: Path, site_dir: Path) -> list[tuple[str, str]]:
     videos = []
     for path in sorted((knowledge_base / "videos").glob("*/summary.zh.md")):
         text = path.read_text(encoding="utf-8")
         match = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
         title = match.group(1) if match else path.parent.name
-        rel = path.relative_to(knowledge_base).as_posix()
+        rel = f"videos/{path.parent.name}/summary.html"
+        output = site_dir / rel
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(_wrap_page(title, _markdown_to_html(text)), encoding="utf-8")
         videos.append((title, rel))
     return videos
 
@@ -68,16 +91,43 @@ def build_site(knowledge_base: Path, site_dir: Path) -> Path:
     site_dir.mkdir(parents=True, exist_ok=True)
     daily = _read(knowledge_base / "daily" / "latest.md", "# 消防专业资料自动收集日报\n\n- 本次新增：0 条\n")
     source_check = _read(knowledge_base / "source-check.md", "# 信息源体检报告\n\n- 尚未生成体检报告\n")
-    video_links = _collect_video_links(knowledge_base)
+    video_links = _collect_video_links(knowledge_base, site_dir)
     videos_html = "\n".join(
         f"<li><a href=\"{html.escape(href)}\">{html.escape(title)}</a></li>" for title, href in video_links
     ) or "<li>暂无入库视频摘要。低相关视频会被过滤，不进入资料库。</li>"
-    page = f"""<!doctype html>
+    page = _wrap_page(
+        "消防资料自动收件箱",
+        f"""
+  <header>
+    <h1>消防资料自动收件箱</h1>
+    <p>免费优先：不调用付费 API，不下载完整视频，只做公开资料收集、去重和待处理排队。</p>
+  </header>
+  <main>
+    <section>
+      {_markdown_to_html(daily)}
+    </section>
+    <section>
+      <h2>入库资料摘要</h2>
+      <ul>{videos_html}</ul>
+    </section>
+    <section>
+      {_markdown_to_html(source_check)}
+    </section>
+  </main>
+""",
+    )
+    output = site_dir / "index.html"
+    output.write_text(page, encoding="utf-8")
+    return output
+
+
+def _wrap_page(title: str, body: str) -> str:
+    return f"""<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>消防资料自动收件箱</title>
+  <title>{html.escape(title)}</title>
   <style>
     :root {{
       color-scheme: light;
@@ -114,25 +164,7 @@ def build_site(knowledge_base: Path, site_dir: Path) -> Path:
   </style>
 </head>
 <body>
-  <header>
-    <h1>消防资料自动收件箱</h1>
-    <p>免费优先：不调用付费 API，不下载完整视频，只做公开资料收集、去重和待处理排队。</p>
-  </header>
-  <main>
-    <section>
-      {_markdown_to_html(daily)}
-    </section>
-    <section>
-      <h2>入库视频摘要</h2>
-      <ul>{videos_html}</ul>
-    </section>
-    <section>
-      {_markdown_to_html(source_check)}
-    </section>
-  </main>
+{body}
 </body>
 </html>
 """
-    output = site_dir / "index.html"
-    output.write_text(page, encoding="utf-8")
-    return output

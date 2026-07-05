@@ -45,6 +45,8 @@ def run_daily(sources_path: Path, output_dir: Path, database_path: Path) -> int:
             continue
         xml_text = fetch_youtube_rss(channel_id)
         for item in parse_youtube_rss(xml_text, source.name, source.language, source.tags):
+            if item.relevance_score < 2:
+                continue
             subtitle = fetch_youtube_subtitle(item.video_id, [source.language, "en", "zh-Hans"])
             updated = apply_subtitle_status(item, subtitle)
             is_new = db.upsert_video(updated)

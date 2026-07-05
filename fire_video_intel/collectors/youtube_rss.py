@@ -54,7 +54,7 @@ def parse_youtube_rss(xml_text: str, source_name: str, language: str, tags: Iter
             link = link_node.attrib.get("href", "")
         if not link and video_id:
             link = f"https://www.youtube.com/watch?v={video_id}"
-        score = score_fire_relevance(title, description, tags)
+        score = score_fire_relevance(title, description, [])
         items.append(
             VideoItem(
                 video_id=video_id,

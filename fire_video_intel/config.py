@@ -13,10 +13,18 @@ class Source:
     priority: str = "medium"
     language: str = "unknown"
     tags: List[str] = None
+    link_keywords: List[str] = None
+    exclude_keywords: List[str] = None
+    max_items: str = "5"
+    crawl_depth: str = "1"
 
     def __post_init__(self):
         if self.tags is None:
             object.__setattr__(self, "tags", [])
+        if self.link_keywords is None:
+            object.__setattr__(self, "link_keywords", [])
+        if self.exclude_keywords is None:
+            object.__setattr__(self, "exclude_keywords", [])
 
 
 def _clean(value: str):
@@ -47,4 +55,3 @@ def load_sources(path: Path) -> List[Source]:
     if current:
         sources.append(Source(**current))
     return sources
-

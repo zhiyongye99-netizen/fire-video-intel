@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 
 from fire_video_intel.collectors.youtube_rss import fetch_youtube_rss, parse_youtube_rss, resolve_channel_id
-from fire_video_intel.collectors.web_page import fetch_web_page, parse_web_page
+from fire_video_intel.collectors.web_page import ArticleLink, extract_article_links, fetch_web_page, parse_web_page
 from fire_video_intel.config import load_sources
 from fire_video_intel.processors.subtitle_fetcher import apply_subtitle_status, fetch_youtube_subtitle
 from fire_video_intel.storage.database import IntelDatabase
@@ -58,18 +58,54 @@ def run_daily(sources_path: Path, output_dir: Path, database_path: Path) -> int:
                         processed += 1
             elif source.type == "web":
                 html_text = fetch_web_page(source.url)
-                item, excerpt = parse_web_page(html_text, source)
-                if item.relevance_score < 2:
-                    continue
-                is_new = db.upsert_video(item)
-                if is_new:
-                    write_video_summary(output_dir, item, excerpt)
-                    processed += 1
+                links = extract_article_links(html_text, source, limit=int(source.max_items))
+                if int(source.crawl_depth) > 1:
+                    links = expand_article_links(source, links)
+                if not links:
+                    links = [ArticleLink(title=source.name, url=source.url)]
+                for link in links:
+                    detail_html = html_text if link.url == source.url else fetch_web_page(link.url)
+                    item, excerpt = parse_web_page(detail_html, source, url=link.url)
+                    if item.relevance_score < 2:
+                        continue
+                    is_new = db.upsert_video(item)
+                    if is_new:
+                        write_video_summary(output_dir, item, excerpt)
+                        processed += 1
         except Exception as exc:
             failures.append(f"{source.name}: {exc.__class__.__name__}: {exc}")
             continue
     write_daily_queue(output_dir, processed, failures)
     return 0
+
+
+def expand_article_links(source, links):
+    expanded = []
+    seen = set()
+    for link in links:
+        if link.url in seen:
+            continue
+        seen.add(link.url)
+        expanded.append(link)
+        if len(expanded) >= int(source.max_items):
+            break
+        if _looks_like_listing(link):
+            try:
+                html_text = fetch_web_page(link.url)
+            except Exception:
+                continue
+            for child in extract_article_links(html_text, source, limit=int(source.max_items)):
+                if child.url not in seen:
+                    seen.add(child.url)
+                    expanded.append(child)
+                if len(expanded) >= int(source.max_items):
+                    break
+    return expanded[: int(source.max_items)]
+
+
+def _looks_like_listing(link: ArticleLink) -> bool:
+    value = f"{link.title} {link.url}".lower()
+    return any(keyword in value for keyword in ["reports", "archives", "tag/", "training/", "firefighting/"])
 
 
 def write_daily_queue(output_dir: Path, processed: int, failures=None) -> None:
